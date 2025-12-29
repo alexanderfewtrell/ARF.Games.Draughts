@@ -37,3 +37,8 @@ Azure and Aspire
 Do Not
 - Avoid spaces and mixed casing within the same category.
 - Avoid abbreviations unless widely known (e.g., `Dto`, `Api`).
+
+Docs and Iterations
+- Iteration folder name: `yyyy-mm-dd-<short-slug>` (UTC date + kebab-case slug), e.g., `2025-01-05-draughts-mvp`.
+- SOR location: `docs/<iteration-id>/specifications/sor/<sor-slug>/sor.md`.
+- Use kebab-case for all docs files and folders (except ADR numbering schemes).

@@ -29,8 +29,14 @@ Data and Migrations
 - `migrations/` folder within Infrastructure or a dedicated Migrations project per context.
 
 Docs
-- `docs/adr/` — ADRs using MADR format
-- `docs/diagrams/` — architecture diagrams (PlantUML/Mermaid)
+- `docs/<iteration-id>/` — per-iteration docs root (e.g., `2025-01-05-draughts-mvp/`)
+  - `sor/<sor-slug>/sor.md` — SOR content using the SOR template
+  - `specifications/` — technical specifications
+  - `plans/` — iteration plans and milestones
+  - `designs/` — design notes and diagrams for this iteration
+  - `notes/` — meeting notes and ad-hoc docs
+- `docs/adr/` — ADRs using MADR format (global, not per-iteration)
+- `docs/diagrams/` — shared diagrams (PlantUML/Mermaid)
 
 Rules
 - Keep projects small and focused.

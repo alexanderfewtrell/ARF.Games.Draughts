@@ -17,26 +17,27 @@ Interactive Workflow
 1. Parse SOR
 - Summarize key points; note ambiguities.
 - Present brief reasoning.
-- Ask numbered clarifying questions derived from SOR and repo context.
+- Ask numbered clarifying questions derived from SOR and repo context, strictly one question at a time. Wait for the user's answer before proceeding to the next question.
 
 2. Confirm Architecture & Components
 - Propose architecture aligned to `instructions/architecture.md`.
-- Ask numbered questions to confirm components, integrations, persistence, APIs/UI, security, deployment.
+- Ask numbered questions to confirm components, integrations, persistence, APIs/UI, security, deployment, one at a time. Do not batch multiple questions.
 
 3. Confirm NFRs & Observability
 - Propose targets per SOR and repo norms.
-- Ask numbered questions to confirm availability, performance, scalability, observability stack.
+- Ask numbered questions to confirm availability, performance, scalability, observability stack, one at a time.
 
 4. Confirm Security & Compliance
 - Map SC refs to controls.
-- Ask numbered questions to confirm protection mechanisms and compliance scope.
+- Ask numbered questions to confirm protection mechanisms and compliance scope, one at a time.
 
 5. Confirm Environments & Deployment
 - Outline environments from SOR.
-- Ask numbered questions to confirm environments and release strategy.
+- Ask numbered questions to confirm environments and release strategy, one at a time.
 
 6. Confirm Test Strategy
 - Propose strategy; ask numbered questions to confirm test levels and quality gates.
+- Ask questions one at a time when confirming test levels and quality gates.
 
 7. Generate Specs Iteratively
 - Compile overview and component specs using the template.
@@ -49,7 +50,7 @@ Interactive Workflow
 
 Interaction Protocol
 - Precede each question block with "Reasoning:".
-- Use numbered options; allow comma-separated multi-select.
+- Use numbered options. Ask only one question at a time and wait for the user's answer before asking the next question. Avoid comma-separated multi-select; if multiple decisions are required, ask them in separate turns.
 - Echo decisions in a compact summary for confirmation.
 - Ask clarifying questions if conflicts arise.
 - Keep responses short and impersonal.

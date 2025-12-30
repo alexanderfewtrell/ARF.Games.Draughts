@@ -1,0 +1,298 @@
+@page "/"
+@using Draughts.Domain.Models
+@using Microsoft.AspNetCore.Components.Web
+@using System.Linq
+@inject Draughts.Domain.IRulesEngine RulesEngine
+@inject HttpClient Http
+
+<PageTitle>Draughts</PageTitle>
+
+<h1>ARF.Games Draughts</h1>
+
+<div class="game-container">
+    <div class="board" role="grid" aria-label="Draughts board">
+        @for (int r = 0; r < Board.Size; r++)
+        {
+            var row = r;
+            <div class="board-row" role="row">
+                @for (int c = 0; c < Board.Size; c++)
+                {
+                    var col = c;
+                    var isDark = (row + col) % 2 == 1;
+                    var piece = _board.Get(row, col);
+                    var isSelected = _selectedRow == row && _selectedCol == col;
+                    var isLegalDestination = _legalMoves.Any(m => m.ToRow == row && m.ToCol == col);
+                    var cellClass = GetCellClass(isDark, isSelected, isLegalDestination);
+
+                    <div class="cell @cellClass"
+                         role="gridcell"
+                         tabindex="0"
+                         aria-label="@GetCellLabel(row, col, piece)"
+                         @onclick="() => OnCellClick(row, col)">
+                        @if (piece is not null)
+                        {
+                            <span class="piece @piece.Owner.ToString().ToLower() @piece.Type.ToString().ToLower()">
+                                @(piece.Type == PieceType.King ? "?" : "?")
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <StatusBar CurrentPlayer="@_currentPlayer" Status="@_status" />
+
+    @if (_mustCapture)
+    {
+        <div class="capture-prompt" role="alert">
+            ?? You must capture!
+        </div>
+    }
+
+    @if (_gameOver)
+    {
+        <RestartDialog Winner="@_winner" OnRestart="RestartGame" />
+    }
+</div>
+
+@code {
+    private Board _board = new();
+    private Player _currentPlayer = Player.White;
+    private string _status = "Your turn";
+    private bool _gameOver;
+    private Player? _winner;
+    private bool _mustCapture;
+    private bool _isAiTurn;
+
+    // Selection state
+    private int? _selectedRow;
+    private int? _selectedCol;
+    private List<Move> _legalMoves = new();
+
+    protected override void OnInitialized()
+    {
+        InitializeBoard();
+    }
+
+    private void InitializeBoard()
+    {
+        _board = new Board();
+        // Spanish draughts: 12 pieces per side on dark squares (rows 0-2 black, rows 5-7 white)
+        for (int r = 0; r < 3; r++)
+        {
+            for (int c = 0; c < Board.Size; c++)
+            {
+                if ((r + c) % 2 == 1)
+                    _board.Set(r, c, new Piece(Player.Black, PieceType.Man));
+            }
+        }
+        for (int r = 5; r < 8; r++)
+        {
+            for (int c = 0; c < Board.Size; c++)
+            {
+                if ((r + c) % 2 == 1)
+                    _board.Set(r, c, new Piece(Player.White, PieceType.Man));
+            }
+        }
+        _currentPlayer = Player.White;
+        _status = "Your turn";
+        _gameOver = false;
+        _winner = null;
+        _mustCapture = false;
+        _isAiTurn = false;
+        ClearSelection();
+        UpdateMustCaptureStatus();
+    }
+
+    private void OnCellClick(int row, int col)
+    {
+        if (_gameOver || _isAiTurn)
+            return;
+
+        var piece = _board.Get(row, col);
+
+        // If clicking on a legal destination, make the move
+        var targetMove = _legalMoves.FirstOrDefault(m => m.ToRow == row && m.ToCol == col);
+        if (targetMove is not null)
+        {
+            ApplyPlayerMove(targetMove);
+            return;
+        }
+
+        // If clicking on own piece, select it
+        if (piece is not null && piece.Owner == _currentPlayer)
+        {
+            SelectPiece(row, col);
+            return;
+        }
+
+        // Clicking elsewhere clears selection
+        ClearSelection();
+    }
+
+    private void SelectPiece(int row, int col)
+    {
+        _selectedRow = row;
+        _selectedCol = col;
+
+        // Get all legal moves and filter to this piece
+        var allMoves = RulesEngine.GetLegalMoves(_board, _currentPlayer).ToList();
+        _legalMoves = allMoves.Where(m => m.FromRow == row && m.FromCol == col).ToList();
+
+        // Update must-capture indicator
+        _mustCapture = allMoves.Any(m => m.IsCapture);
+    }
+
+    private void ClearSelection()
+    {
+        _selectedRow = null;
+        _selectedCol = null;
+        _legalMoves = new();
+    }
+
+    private void ApplyPlayerMove(Move move)
+    {
+        _board = RulesEngine.ApplyMove(_board, move);
+        ClearSelection();
+
+        // Check for game over
+        if (CheckGameOver())
+            return;
+
+        // Switch to AI turn
+        _currentPlayer = Player.Black;
+        _status = "AI is thinking...";
+        _isAiTurn = true;
+
+        // Request AI move (async)
+        _ = RequestAiMoveAsync();
+    }
+
+    private async Task RequestAiMoveAsync()
+    {
+        try
+        {
+            await Task.Delay(500); // Brief delay for UX
+
+            // Build board state for API
+            var pieces = new List<object>();
+            for (int r = 0; r < Board.Size; r++)
+            {
+                for (int c = 0; c < Board.Size; c++)
+                {
+                    var p = _board.Get(r, c);
+                    if (p is not null)
+                    {
+                        pieces.Add(new { Row = r, Col = c, Owner = p.Owner.ToString(), Type = p.Type.ToString() });
+                    }
+                }
+            }
+
+            // Note: API expects "Board" not "BoardState"
+            var request = new { Board = new { Pieces = pieces }, Player = "Black" };
+            var response = await Http.PostAsJsonAsync("/api/ai/move", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // API returns MoveDto directly, not wrapped in an object
+                var aiMove = await response.Content.ReadFromJsonAsync<AiMoveDto>();
+                if (aiMove is not null)
+                {
+                    // Convert DTO to domain Move
+                    var captured = aiMove.CapturedPositions?
+                        .Select(c => (c.Row, c.Col))
+                        .ToArray() ?? Array.Empty<(int, int)>();
+
+                    var move = captured.Length > 0
+                        ? Move.Capture(aiMove.FromRow, aiMove.FromCol, aiMove.ToRow, aiMove.ToCol, captured)
+                        : Move.Simple(aiMove.FromRow, aiMove.FromCol, aiMove.ToRow, aiMove.ToCol);
+
+                    _board = RulesEngine.ApplyMove(_board, move);
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"AI move failed: {response.StatusCode} - {errorContent}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"AI move error: {ex.Message}");
+        }
+
+        // Switch back to player
+        _isAiTurn = false;
+        _currentPlayer = Player.White;
+
+        if (!CheckGameOver())
+        {
+            _status = "Your turn";
+            UpdateMustCaptureStatus();
+        }
+
+        StateHasChanged();
+    }
+
+    private bool CheckGameOver()
+    {
+        if (RulesEngine.IsGameOver(_board))
+        {
+            _gameOver = true;
+            var whiteMoves = RulesEngine.GetLegalMoves(_board, Player.White).Any();
+            var blackMoves = RulesEngine.GetLegalMoves(_board, Player.Black).Any();
+
+            if (!whiteMoves && !blackMoves)
+            {
+                _status = "Draw!";
+                _winner = null;
+            }
+            else if (!whiteMoves)
+            {
+                _status = "Black wins!";
+                _winner = Player.Black;
+            }
+            else
+            {
+                _status = "White wins!";
+                _winner = Player.White;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private void UpdateMustCaptureStatus()
+    {
+        var moves = RulesEngine.GetLegalMoves(_board, _currentPlayer);
+        _mustCapture = moves.Any(m => m.IsCapture);
+    }
+
+    private void RestartGame()
+    {
+        InitializeBoard();
+    }
+
+    private string GetCellClass(bool isDark, bool isSelected, bool isLegalDestination)
+    {
+        var classes = isDark ? "dark" : "light";
+        if (isSelected)
+            classes += " selected";
+        if (isLegalDestination)
+            classes += " highlight";
+        return classes;
+    }
+
+        private string GetCellLabel(int row, int col, Piece? piece)
+        {
+            var pos = $"{(char)('A' + col)}{8 - row}";
+            if (piece is null)
+                return $"Empty cell {pos}";
+            return $"{piece.Owner} {piece.Type} at {pos}";
+        }
+
+        // Response DTO for AI endpoint (matches API's MoveDto)
+        private record AiMoveDto(int FromRow, int FromCol, int ToRow, int ToCol, List<CapturedDto>? CapturedPositions);
+        private record CapturedDto(int Row, int Col);
+    }

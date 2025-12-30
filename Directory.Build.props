@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <!-- Enable .NET code analyzers for all projects -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <!-- Treat warnings as errors in CI/Release builds -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' or '$(CI)' == 'true'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

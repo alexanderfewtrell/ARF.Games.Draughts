@@ -1,0 +1,14 @@
+@using Draughts.Domain.Models
+
+<div class="status-bar" role="status" aria-live="polite">
+    <span class="current-player">Current: <strong>@CurrentPlayer</strong></span>
+    <span class="status-message">@Status</span>
+</div>
+
+@code {
+    [Parameter]
+    public Player CurrentPlayer { get; set; }
+
+    [Parameter]
+    public string Status { get; set; } = string.Empty;
+}

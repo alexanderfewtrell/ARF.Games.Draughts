@@ -1,0 +1,139 @@
+/* game.css - Draughts board styling */
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.board {
+    display: flex;
+    flex-direction: column;
+    border: 4px solid #333;
+}
+
+.board-row {
+    display: flex;
+}
+
+.cell {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.cell:focus {
+    outline: 3px solid #ffc107;
+    outline-offset: -3px;
+}
+
+.cell.light {
+    background-color: #f0d9b5;
+}
+
+.cell.dark {
+    background-color: #b58863;
+}
+
+.cell.highlight {
+    background-color: #7fff7f;
+}
+
+.cell.selected {
+    background-color: #ffeb3b;
+}
+
+.piece {
+    font-size: 2rem;
+    user-select: none;
+}
+
+.piece.white {
+    color: #fff;
+    text-shadow: 0 0 3px #000;
+}
+
+.piece.black {
+    color: #222;
+    text-shadow: 0 0 2px #fff;
+}
+
+.piece.king {
+    font-weight: bold;
+}
+
+/* Capture prompt */
+.capture-prompt {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-weight: bold;
+    color: #856404;
+    margin-top: 0.5rem;
+}
+
+/* Restart dialog */
+.restart-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.dialog-content {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dialog-content h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.dialog-content button {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+.dialog-content button:hover {
+    background-color: #45a049;
+}
+
+/* High-contrast mode support */
+@media (prefers-contrast: high) {
+    .cell.light {
+        background-color: #fff;
+        border: 1px solid #000;
+    }
+    .cell.dark {
+        background-color: #000;
+    }
+    .piece.white {
+        color: #fff;
+    }
+    .piece.black {
+        color: #000;
+    }
+}

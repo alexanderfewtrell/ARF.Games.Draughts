@@ -1,0 +1,27 @@
+@using Draughts.Domain.Models
+
+<div class="restart-dialog" role="dialog" aria-modal="true" aria-labelledby="restart-title">
+    <div class="dialog-content">
+        <h2 id="restart-title">Game Over</h2>
+        <p>@GetResultMessage()</p>
+        <button @onclick="OnRestart">New Game</button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Player? Winner { get; set; }
+
+    [Parameter]
+    public EventCallback OnRestart { get; set; }
+
+    private string GetResultMessage()
+    {
+        return Winner switch
+        {
+            Player.White => "?? You win! Congratulations!",
+            Player.Black => "The AI wins. Better luck next time!",
+            _ => "It's a draw!"
+        };
+    }
+}

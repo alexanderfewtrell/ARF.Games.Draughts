@@ -240,23 +240,52 @@
         if (RulesEngine.IsGameOver(_board))
         {
             _gameOver = true;
-            var whiteMoves = RulesEngine.GetLegalMoves(_board, Player.White).Any();
-            var blackMoves = RulesEngine.GetLegalMoves(_board, Player.Black).Any();
 
-            if (!whiteMoves && !blackMoves)
+            // Check if either player has no pieces
+            var hasWhitePieces = false;
+            var hasBlackPieces = false;
+            for (int r = 0; r < Board.Size; r++)
             {
-                _status = "Draw!";
-                _winner = null;
+                for (int c = 0; c < Board.Size; c++)
+                {
+                    var piece = _board.Get(r, c);
+                    if (piece?.Owner == Player.White) hasWhitePieces = true;
+                    if (piece?.Owner == Player.Black) hasBlackPieces = true;
+                }
             }
-            else if (!whiteMoves)
+
+            // Determine winner
+            if (!hasWhitePieces)
             {
-                _status = "Black wins!";
+                _status = "Black wins! You have no pieces left.";
                 _winner = Player.Black;
+            }
+            else if (!hasBlackPieces)
+            {
+                _status = "You win! AI has no pieces left.";
+                _winner = Player.White;
             }
             else
             {
-                _status = "White wins!";
-                _winner = Player.White;
+                // Both have pieces, check who has no moves
+                var whiteMoves = RulesEngine.GetLegalMoves(_board, Player.White).Any();
+                var blackMoves = RulesEngine.GetLegalMoves(_board, Player.Black).Any();
+
+                if (!whiteMoves && !blackMoves)
+                {
+                    _status = "Draw! No moves available.";
+                    _winner = null;
+                }
+                else if (!whiteMoves)
+                {
+                    _status = "Black wins! You have no legal moves.";
+                    _winner = Player.Black;
+                }
+                else
+                {
+                    _status = "You win! AI has no legal moves.";
+                    _winner = Player.White;
+                }
             }
             return true;
         }

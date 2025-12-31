@@ -312,11 +312,38 @@ public class RulesEngineStub : IRulesEngine
 
     public bool IsGameOver(Board board)
     {
-        // Game over when no legal moves for either player
-        var whiteMoves = GetLegalMoves(board, Player.White);
-        if (whiteMoves.Any())
-            return false;
-        var blackMoves = GetLegalMoves(board, Player.Black);
-        return !blackMoves.Any();
+        // Game over when either player has no pieces or no legal moves
+        var hasWhitePieces = false;
+        var hasBlackPieces = false;
+
+        for (var r = 0; r < Board.Size; r++)
+        {
+            for (var c = 0; c < Board.Size; c++)
+            {
+                var piece = board.Get(r, c);
+                if (piece is null) continue;
+
+                if (piece.Owner == Player.White)
+                    hasWhitePieces = true;
+                else
+                    hasBlackPieces = true;
+
+                // Early exit if both players have pieces
+                if (hasWhitePieces && hasBlackPieces)
+                    break;
+            }
+            if (hasWhitePieces && hasBlackPieces)
+                break;
+        }
+
+        // If either player has no pieces, game is over
+        if (!hasWhitePieces || !hasBlackPieces)
+            return true;
+
+        // If either player has no legal moves, game is over
+        var whiteMoves = GetLegalMoves(board, Player.White).Any();
+        var blackMoves = GetLegalMoves(board, Player.Black).Any();
+
+        return !whiteMoves || !blackMoves;
     }
 }

@@ -236,20 +236,64 @@ public class RulesEngineTests
         Assert.Empty(whiteMoves);
     }
 
-    [Fact]
-    public void MandatoryCapture_WhenMultipleCapturesAvailable_AllReturned()
-    {
-        // Arrange: White man at (5,3), Black at (4,2) and (4,4) - two capture options
-        var board = new Board();
-        board.Set(5, 3, new Piece(Player.White, PieceType.Man));
-        board.Set(4, 2, new Piece(Player.Black, PieceType.Man));
-        board.Set(4, 4, new Piece(Player.Black, PieceType.Man));
+        [Fact]
+        public void MandatoryCapture_WhenMultipleCapturesAvailable_AllReturned()
+        {
+            // Arrange: White man at (5,3), Black at (4,2) and (4,4) - two capture options
+            var board = new Board();
+            board.Set(5, 3, new Piece(Player.White, PieceType.Man));
+            board.Set(4, 2, new Piece(Player.Black, PieceType.Man));
+            board.Set(4, 4, new Piece(Player.Black, PieceType.Man));
 
-        // Act
-        var moves = _engine.GetLegalMoves(board, Player.White).ToList();
+            // Act
+            var moves = _engine.GetLegalMoves(board, Player.White).ToList();
 
-        // Assert: Both capture moves should be available
-        Assert.Equal(2, moves.Count);
-        Assert.All(moves, m => Assert.True(m.IsCapture));
+            // Assert: Both capture moves should be available
+            Assert.Equal(2, moves.Count);
+            Assert.All(moves, m => Assert.True(m.IsCapture));
+        }
+
+        [Fact]
+        public void IsGameOver_WhenPlayerHasNoPieces_ReturnsTrue()
+        {
+            // Arrange: Only black pieces on board (white has been eliminated)
+            var board = new Board();
+            board.Set(3, 3, new Piece(Player.Black, PieceType.Man));
+
+            // Act
+            var isOver = _engine.IsGameOver(board);
+
+            // Assert: Game is over because white has no pieces
+            Assert.True(isOver);
+        }
+
+        [Fact]
+        public void IsGameOver_WhenBothPlayersHavePiecesAndMoves_ReturnsFalse()
+        {
+            // Arrange: Both players have pieces and can move
+            var board = new Board();
+            board.Set(5, 2, new Piece(Player.White, PieceType.Man));
+            board.Set(2, 3, new Piece(Player.Black, PieceType.Man));
+
+            // Act
+            var isOver = _engine.IsGameOver(board);
+
+            // Assert: Game is not over
+            Assert.False(isOver);
+        }
+
+        [Fact]
+        public void IsGameOver_WhenOnePlayerHasNoLegalMoves_ReturnsTrue()
+        {
+            // Arrange: White piece blocked in corner with no moves
+            var board = new Board();
+            board.Set(0, 0, new Piece(Player.White, PieceType.Man)); // Corner, can't move forward (already at top)
+            board.Set(3, 3, new Piece(Player.Black, PieceType.Man)); // Black has moves
+
+            // Act
+            var isOver = _engine.IsGameOver(board);
+
+            // Assert: Game is over because white has no legal moves
+            Assert.True(isOver);
+        }
     }
-}

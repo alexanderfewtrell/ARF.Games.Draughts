@@ -6,5 +6,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Draughts.Domain\Draughts.Domain.csproj" />
+    <ProjectReference Include="..\Draughts.ServiceDefaults\Draughts.ServiceDefaults.csproj" />
   </ItemGroup>
 </Project>

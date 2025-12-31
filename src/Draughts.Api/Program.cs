@@ -9,6 +9,8 @@ using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // Development CORS policy for local testing
 builder.Services.AddCors(options =>
 {
@@ -21,6 +23,8 @@ builder.Services.AddSingleton<Draughts.Domain.IRulesEngine, Draughts.Domain.Rule
 builder.Services.AddScoped<IAiService, AiService>();
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 if (!app.Environment.IsDevelopment())
 {
